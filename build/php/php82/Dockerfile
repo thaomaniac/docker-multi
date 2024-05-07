@@ -1,4 +1,4 @@
-FROM php:8.1-fpm
+FROM php:8.2-fpm
 
 LABEL authors="thaomaniac"
 ARG PHP_INI_FILE=php.ini-development
