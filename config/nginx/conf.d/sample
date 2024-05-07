@@ -1,7 +1,3 @@
-upstream fastcgi_backend {
-    server php81:9000;
-}
-
 server {
     listen 80;
     server_name sample.local;

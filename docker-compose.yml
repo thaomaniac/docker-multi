@@ -12,7 +12,7 @@ services:
       - ./config/nginx/conf.d:/etc/nginx/conf.d
       - ./config/nginx/m2conf.d:/etc/nginx/m2conf.d
       - ./config/nginx/ssl:/etc/ssl
-      - ./magento:/var/www/html:cached
+      - ./www:/var/www:cached
       - ./var/log/nginx:/var/log/nginx
 
   php81:
@@ -21,11 +21,24 @@ services:
       context: ./build/php/php81
       dockerfile: Dockerfile
     ports:
-      - "${PHP_SERVER_PORT}:9000"
+      - "9000"
     volumes:
       - ./config/php/php81/php-custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
-      - ./www:/var/www/html:cached
-    working_dir: /var/www/html
+      - ./www:/var/www:cached
+    working_dir: /var/www
+    user: 'www-data'
+
+  php82:
+    #build: ./config/php
+    build:
+      context: ./build/php/php82
+      dockerfile: Dockerfile
+    ports:
+      - "9000"
+    volumes:
+      - ./config/php/php82/php-custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
+      - ./www:/var/www:cached
+    working_dir: /var/www
     user: 'www-data'
 
   mysql:

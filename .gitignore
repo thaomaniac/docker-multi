@@ -1,9 +1,9 @@
 /.idea
 .env
 /config/nginx/conf.d/*
-!/config/nginx/conf.d/sample.conf
-!/config/nginx/conf.d/df.conf
-/config/nginx/m2conf.d.d/*
+!/config/nginx/conf.d/default.conf
+!/config/nginx/conf.d/sample
+/config/nginx/m2conf.d/*
 !/config/nginx/m2conf.d/sample.conf
 /config/nginx/ssl/*
 !/config/nginx/ssl/.gitkeep
@@ -13,3 +13,4 @@
 !/var/log/.gitkeep
 /www/*
 !/www/.gitkeep
+.php-map
