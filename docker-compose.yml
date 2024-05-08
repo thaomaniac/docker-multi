@@ -16,10 +16,9 @@ services:
       - ./var/log/nginx:/var/log/nginx
 
   php81:
-    #build: ./config/php
     build:
-      context: ./build/php/php81
-      dockerfile: Dockerfile
+      context: ./build/php
+      dockerfile: php81.Dockerfile
     ports:
       - "9000"
     volumes:
@@ -29,10 +28,9 @@ services:
     user: 'www-data'
 
   php82:
-    #build: ./config/php
     build:
-      context: ./build/php/php82
-      dockerfile: Dockerfile
+      context: ./build/php
+      dockerfile: php82.Dockerfile
     ports:
       - "9000"
     volumes:
