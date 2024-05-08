@@ -11,5 +11,5 @@ server {
     ssl_certificate_key  /etc/ssl/ssl-local.key;
 
     set $MAGE_ROOT /var/www/html;
-    include /etc/nginx/m2conf.d/sample.conf;
+    include /etc/nginx/m2conf/sample.conf;
 }
