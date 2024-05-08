@@ -22,7 +22,7 @@ services:
     ports:
       - "9000"
     volumes:
-      - ./config/php/php81/php-custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
+      - ./config/php/php81/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
       - ./www:/var/www:cached
     working_dir: /var/www
     user: 'www-data'
@@ -34,7 +34,7 @@ services:
     ports:
       - "9000"
     volumes:
-      - ./config/php/php82/php-custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
+      - ./config/php/php82/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
       - ./www:/var/www:cached
     working_dir: /var/www
     user: 'www-data'
