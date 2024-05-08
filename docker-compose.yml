@@ -10,7 +10,7 @@ services:
     volumes:
       - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./config/nginx/conf.d:/etc/nginx/conf.d
-      - ./config/nginx/m2conf.d:/etc/nginx/m2conf.d
+      - ./config/nginx/m2conf:/etc/nginx/m2conf
       - ./config/nginx/ssl:/etc/ssl
       - ./www:/var/www:cached
       - ./var/log/nginx:/var/log/nginx
