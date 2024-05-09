@@ -1,6 +1,6 @@
 <?php
-$cfg['TitleDatabase'] = '@DATABASE@';
-$cfg['TitleTable'] = '@DATABASE@ / @TABLE@';
+$cfg['TitleDatabase'] = '@DATABASE@ | @PHPMYADMIN@';
+$cfg['TitleTable'] = '@DATABASE@ / @TABLE@ | @PHPMYADMIN@';
 $cfg['TitleServer'] = '@HTTP_HOST@ / @VSERVER@ | @PHPMYADMIN@';
 $cfg['TitleDefault'] = '@HTTP_HOST@ | @PHPMYADMIN@';
 
