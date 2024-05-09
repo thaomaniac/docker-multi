@@ -81,11 +81,11 @@ services:
     depends_on:
       - mysql
 
-  #  redis:
-  #    image: redis:${REDIS_IMAGE_VERSION}
-  #    hostname: redis
-  #    ports:
-  #      - "${REDIS_SERVER_PORT}:6379"
+  redis:
+    image: redis:${REDIS_IMAGE_VERSION}
+    hostname: redis
+    ports:
+      - "${REDIS_SERVER_PORT}:6379"
 
   mailhog:
     image: mailhog/mailhog
