@@ -1,5 +1,6 @@
 /.idea
 .env
+.php-map
 /config/nginx/conf.d/*
 !/config/nginx/conf.d/default.conf
 !/config/nginx/conf.d/sample
@@ -13,4 +14,3 @@
 !/var/log/.gitkeep
 /www/*
 !/www/.gitkeep
-.php-map
