@@ -2,8 +2,9 @@
 .env
 .php-map
 /config/nginx/conf.d/*
-!/config/nginx/conf.d/default.conf
-!/config/nginx/conf.d/sample
+!/config/nginx/conf.d/00-default.conf
+!/config/nginx/conf.d/defaultconf
+!/config/nginx/conf.d/sampleconf
 /config/nginx/m2conf/*
 !/config/nginx/m2conf/sample.conf
 /config/nginx/ssl/*
