@@ -15,6 +15,18 @@ services:
       - ./www:/var/www:cached
       - ./var/log/nginx:/var/log/nginx
 
+  php74:
+    build:
+      context: ./build/php
+      dockerfile: php74.Dockerfile
+    ports:
+      - "9000"
+    volumes:
+      - ./config/php/php74/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
+      - ./www:/var/www:cached
+    working_dir: /var/www
+    user: 'www-data'
+
   php81:
     build:
       context: ./build/php
