@@ -5,8 +5,8 @@ services:
     hostname: nginx
     image: nginx:${NGINX_IMAGE_VERSION}
     ports:
-      - "${NGINX_SERVER_HTTP_PORT}:80"
-      - "${NGINX_SERVER_HTTPS_PORT}:443"
+      - 80:80
+      - 443:443
     volumes:
       - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./config/nginx/conf.d:/etc/nginx/conf.d:ro
@@ -20,7 +20,7 @@ services:
       context: ./build/php
       dockerfile: php74.Dockerfile
     ports:
-      - "9000"
+      - 9000
     volumes:
       - ./config/php/php74/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
       - ./www:/var/www:cached
@@ -32,7 +32,7 @@ services:
       context: ./build/php
       dockerfile: php81.Dockerfile
     ports:
-      - "9000"
+      - 9000
     volumes:
       - ./config/php/php81/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
       - ./www:/var/www:cached
@@ -44,7 +44,7 @@ services:
       context: ./build/php
       dockerfile: php82.Dockerfile
     ports:
-      - "9000"
+      - 9000
     volumes:
       - ./config/php/php82/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
       - ./www:/var/www:cached
@@ -53,9 +53,8 @@ services:
 
   mysql:
     image: mysql:${MYSQL_IMAGE_VERSION}
-    hostname: mysql
     ports:
-      - "${MYSQL_SERVER_PORT}:3306"
+      - 3306:3306
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
@@ -65,9 +64,8 @@ services:
 
   elasticsearch:
     image: elasticsearch:${ELASTICSEARCH_IMAGE_VERSION}
-    hostname: elasticsearch
     ports:
-      - "${ELASTICSEARCH_SERVER_PORT}:9200"
+      - 9200:9200
     environment:
       - discovery.type=single-node
     volumes:
@@ -81,11 +79,17 @@ services:
           memory: 200m
           cpus: '0.25'
 
+  redis:
+    image: redis:${REDIS_IMAGE_VERSION}
+    restart: always
+    ports:
+      - 6379:6379
+
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     restart: always
     ports:
-      - ${PHPMYADMIN_SERVER_PORT}:80
+      - 8080:80
     environment:
       PMA_HOST: mysql
       PMA_PMADB: phpmyadmin
@@ -94,14 +98,8 @@ services:
     depends_on:
       - mysql
 
-  redis:
-    image: redis:${REDIS_IMAGE_VERSION}
-    hostname: redis
-    ports:
-      - "${REDIS_SERVER_PORT}:6379"
-
   mailhog:
-    image: mailhog/mailhog
+    build: ./build/mailhog
     volumes:
       - mailhog-data:/home/mailhog
     ports:
@@ -116,5 +114,5 @@ volumes:
   elasticsearch-data:
 
 #networks:
-#  magento:
+#  multiple:
 #    driver: bridge
