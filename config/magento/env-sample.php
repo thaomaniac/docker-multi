@@ -158,7 +158,7 @@ return [
                     'base_media_url' => null
                 ],
                 'secure' => [
-                    'base_url' => 'https://magento.local/',
+                    'base_url' => '{{unsecure_base_url}}',
                     'base_link_url' => '{{secure_base_url}}',
                     'base_static_url' => null,
                     'base_media_url' => null,
