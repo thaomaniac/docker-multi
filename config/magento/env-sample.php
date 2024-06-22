@@ -164,12 +164,15 @@ return [
                     'base_media_url' => null,
                     'use_in_frontend' => 0,
                     'use_in_adminhtml' => 0
+                ],
+                'cookie' => [
+                    'cookie_lifetime' => 864000,
                 ]
             ],
             'admin' => [
                 'security' => [
                     'use_form_key' => 0,
-                    'session_lifetime' => '31536000',
+                    'session_lifetime' => 31536000,
                     'password_is_forced' => 0,
                     'lockout_failures' => '',
                     'password_lifetime' => '',

@@ -62,6 +62,19 @@ services:
     volumes:
       - ./var/data/mysql:/var/lib/mysql:cached
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - 8080:80
+    environment:
+      PMA_HOST: mysql
+      PMA_PMADB: phpmyadmin
+    volumes:
+      - ./config/phpmyadmin/conf.d:/etc/phpmyadmin/conf.d
+    depends_on:
+      - mysql
+
   elasticsearch:
     image: elasticsearch:${ELASTICSEARCH_IMAGE_VERSION}
     ports:
@@ -86,19 +99,6 @@ services:
       - 6379:6379
     volumes:
       - redis-data:/data
-
-  phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    restart: always
-    ports:
-      - 8080:80
-    environment:
-      PMA_HOST: mysql
-      PMA_PMADB: phpmyadmin
-    volumes:
-      - ./config/phpmyadmin/conf.d:/etc/phpmyadmin/conf.d
-    depends_on:
-      - mysql
 
   mailhog:
     build: ./build/mailhog
