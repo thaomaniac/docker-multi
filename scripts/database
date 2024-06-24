@@ -1,0 +1,370 @@
+#!/usr/bin/env bash
+#
+# Script to create virtual host for Nginx server
+#
+
+# UnComment it if bash is lower than 4.x version
+shopt -s extglob
+
+################################################################################
+# CORE FUNCTIONS - Do not edit
+################################################################################
+
+## Uncomment it for debugging purpose
+###set -o errexit
+#set -o pipefail
+#set -o nounset
+#set -o xtrace
+
+#
+# VARIABLES
+#
+_bold=$(tput bold)
+_underline=$(tput sgr 0 1)
+_reset=$(tput sgr0)
+
+_purple=$(tput setaf 171)
+_red=$(tput setaf 1)
+_green=$(tput setaf 76)
+_tan=$(tput setaf 3)
+_blue=$(tput setaf 38)
+
+#
+# HEADERS & LOGGING
+#
+function _debug() {
+  if [[ "$DEBUG" = 1 ]]; then
+    "$@"
+  fi
+}
+
+function _header() {
+  printf '\n%s%s==========  %s  ==========%s\n' "$_bold" "$_purple" "$@" "$_reset"
+}
+
+function _arrow() {
+  printf '➜ %s\n' "$@"
+}
+
+function _success() {
+  printf '%s✔ %s%s\n' "$_green" "$@" "$_reset"
+}
+
+function _error() {
+  printf '%s✖ %s%s\n' "$_red" "$@" "$_reset"
+}
+
+function _warning() {
+  printf '%s➜ %s%s\n' "$_tan" "$@" "$_reset"
+}
+
+function _underline() {
+  printf '%s%s%s%s\n' "$_underline" "$_bold" "$@" "$_reset"
+}
+
+function _bold() {
+  printf '%s%s%s\n' "$_bold" "$@" "$_reset"
+}
+
+function _note() {
+  printf '%s%s%sNote:%s %s%s%s\n' "$_underline" "$_bold" "$_blue" "$_reset" "$_blue" "$@" "$_reset"
+}
+
+function _die() {
+  _error "$@"
+  exit 1
+}
+
+function askYesOrNo {
+  local REPLY=""
+  local DEFAULT_RESPONSE="N"
+
+  while true; do
+    read -erp "$1 [y/N]: " REPLY
+    REPLY=$(echo "${REPLY:-$DEFAULT_RESPONSE}" | tr '[:lower:]' '[:upper:]')
+    case $REPLY in
+    Y) return 0 ;;
+    N) return 1 ;;
+    *) echo "Please enter y or n." ;;
+    esac
+  done
+}
+
+################################################################################
+# SCRIPT FUNCTIONS
+################################################################################
+function _printUsage() {
+  echo -n "Docker Mysql tools
+Version $VERSION
+
+./scripts/$(basename "$0") [OPTION] [ARG]...
+
+    Options:
+        list                      List databases.
+        create                    Create database.
+        export                    Export database.
+        import                    Import database.
+        drop                      Drop database.
+        -h, --help                Display this help and exit.
+
+    Arg:
+      list:
+      create:
+        --db-name             Database name need to create.
+      export:
+        --db-name             Database name need to export.
+      drop:
+        --db-name             Database name need to drop.
+      import:
+        --source                    Name of the database backup file (in database/import folder) use for import.
+        --target                    Name of the target database name import to.
+
+    Examples:
+      Exec database:
+        ./scripts/$(basename "$0") exec
+      List database:
+        ./scripts/$(basename "$0") list
+      Create database:
+        ./scripts/$(basename "$0") create database_name
+      Export database:
+        ./scripts/$(basename "$0") export database_name path_to_file.sql
+      Drop database:
+        ./scripts/$(basename "$0") drop database_name
+      Import database:
+        ./scripts/$(basename "$0") import database_name path_to_file.sql
+"
+  exit 1
+}
+
+function processArgs() {
+  case $1 in
+  create | drop)
+    COMMAND="$1"
+    DATABASE_NAME="$2"
+    for arg in "${@:3}"; do
+      case $arg in
+      --db-name=*)
+        DATABASE_NAME="${arg#*=}"
+        ;;
+      *)
+        _printUsage
+        ;;
+      esac
+    done
+    ;;
+  export)
+    COMMAND="$1"
+    DATABASE_NAME="$2"
+    DATABASE_EXPORT_TARGET_NAME="$3"
+    for arg in "${@:3}"; do
+      case $arg in
+      --db-name=*)
+        DATABASE_NAME="${arg#*=}"
+        ;;
+      --target=* | -t=*)
+        DATABASE_EXPORT_TARGET_NAME="${arg#*=}"
+        ;;
+      esac
+    done
+    ;;
+  import)
+    COMMAND="$1"
+    DATABASE_NAME="$2"
+    DATABASE_IMPORT_SOURCE_NAME="$3"
+    for arg in "${@:3}"; do
+      case $arg in
+      --source=* | -s=*)
+        DATABASE_IMPORT_SOURCE_NAME="${arg#*=}"
+        ;;
+      -db-name=* | -db=*)
+        DATABASE_NAME="${arg#*=}"
+        ;;
+      esac
+    done
+    ;;
+  list)
+    COMMAND="$1"
+    ;;
+  exec)
+    COMMAND="$1"
+    DATABASE_NAME="$2"
+    ;;
+  *)
+    _printUsage
+    ;;
+  esac
+}
+
+function initDefaultArgs() {
+  BACKDATE="$(date +"%Y-%m-%d")"
+}
+
+function getMysqlInformation() {
+  containerNameDB=$(docker inspect -f '{{.Name}}' $(docker compose ps -q mysql) | cut -c2-)
+
+  mysqlUser=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' $containerNameDB | grep MYSQL_USER)
+  user="${mysqlUser/MYSQL_USER=/$replace}"
+
+  mysqlPass=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' $containerNameDB | grep MYSQL_PASSWORD)
+  pass="${mysqlPass/MYSQL_PASSWORD=/$replace}"
+
+  mysqRootPass=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' $containerNameDB | grep MYSQL_ROOT_PASSWORD)
+  rootPass="${mysqRootPass/MYSQL_ROOT_PASSWORD=/$replace}"
+}
+
+function checkDatabaseFileName() {
+  if [[ $(echo ${DATABASE_IMPORT_SOURCE_NAME} | awk -F\. '{print $NF}') != "sql" ]]; then
+    _error "Database source file name extension invalid, must be end .sql. EG: abc.sql"
+    exit 1
+  elif [[ ! -f ${DATABASE_IMPORT_SOURCE_NAME} ]]; then
+    _error "No such file or directory: ${DATABASE_IMPORT_SOURCE_NAME}"
+    exit 1
+  fi
+}
+
+function checkMysqlServiceRunning() {
+  if [[ $(docker compose ps --services --filter "status=running" | grep -E "\bmysql\b") ]]; then
+    _success "Service mysql is running"
+  else
+    _error "Service mysql is not running, please start it!" && exit 1
+  fi
+}
+
+function checkDatabaseName() {
+  DATABASE_PATTERN="^([[:alnum:]]([[:alnum:]_]{0,61}[[:alnum:]]))$"
+  if [[ ${DATABASE_NAME} =~ $DATABASE_PATTERN ]]; then
+    _success "Good database name"
+  else
+    _error "Invalid Database name, please check or choose other name!!"
+    exit 1
+  fi
+}
+
+function checkDatabaseExist() {
+  local db_name=$1
+  if [[ $(docker compose exec mysql mysql -u root -p${rootPass} --skip-column-names -e "show databases like '${db_name}'" 2>&1 | grep -v "Using a password" | grep -o "${db_name}") == ${db_name} ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function execMysqlDatabase() {
+  shift
+  docker compose exec mysql mysql -u root -p${rootPass} "$@"
+}
+
+function listMysqlDatabase() {
+  docker compose exec mysql mysql -u root --password=${rootPass} -e "show databases"
+}
+
+function createMysqlDatabase() {
+  checkDatabaseName
+  if checkDatabaseExist "${DATABASE_NAME}"; then
+    _error "Can't create database '${DATABASE_NAME}'; database exists!" && exit 1
+  else
+    docker compose exec mysql mysql -u root -p${rootPass} --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password"
+    _success "Database '${DATABASE_NAME}' has been created"
+    listMysqlDatabase
+  fi
+}
+
+function dropMysqlDatabase() {
+  if askYesOrNo $"Warning! Do you really want to drop database '${DATABASE_NAME}' ?"; then
+    docker compose exec mysql mysql -u root -p${rootPass} --skip-column-names -e "drop database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password"
+    _success "Database '${DATABASE_NAME}' has been dropped successfully."
+  else
+    _warning "Canceled"
+    exit 1
+  fi
+}
+
+function importMysqlDatabase() {
+  checkDatabaseFileName
+  if checkDatabaseExist "${DATABASE_NAME}"; then
+    _arrow "Importing database"
+    docker compose exec -T mysql mysql -u root -p${rootPass} ${DATABASE_NAME} <${DATABASE_IMPORT_SOURCE_NAME} 2>&1 | grep -v "Using a password"
+    _success "Database name ${DATABASE_NAME} imported"
+  else
+    _error "Unknown database ${DATABASE_NAME}. Please check it!!"
+    exit 1
+  fi
+}
+
+function exportMysqlDatabase() {
+  checkDatabaseName
+  if checkDatabaseExist "${DATABASE_NAME}"; then
+    if [[ -z "$DATABASE_EXPORT_TARGET_NAME" ]]; then
+      DATABASE_EXPORT_TARGET_NAME=$(pwd)/${DATABASE_NAME}-${BACKDATE}.sql
+    fi
+    _arrow "Creating SQL file: $DATABASE_EXPORT_TARGET_NAME"
+    docker compose exec -T mysql /usr/bin/mysqldump -u root --password=${rootPass} ${DATABASE_NAME} 2>&1 | grep -v "Using a password" >$DATABASE_EXPORT_TARGET_NAME
+    _success "Your database exported"
+  else
+    _error "Unknown database ${DATABASE_NAME}. Please check it!!"
+    exit 1
+  fi
+}
+
+function _statusCheck() {
+  if [[ $? -ne 0 ]]; then
+    _error "Failed!" && exit 1
+  fi
+}
+
+function printSuccessMessage() {
+  _success "Complete!"
+}
+
+function doAction() {
+  case $COMMAND in
+  create)
+    createMysqlDatabase
+    ;;
+  import)
+    importMysqlDatabase
+    ;;
+  export)
+    exportMysqlDatabase
+    ;;
+  drop)
+    dropMysqlDatabase
+    ;;
+  list)
+    listMysqlDatabase
+    ;;
+  exec)
+    execMysqlDatabase "$@"
+    ;;
+  esac
+
+  _statusCheck
+}
+
+################################################################################
+# Main
+################################################################################
+export LC_CTYPE=C
+export LANG=C
+
+DEBUG=0
+_debug set -x
+VERSION="1"
+
+function main() {
+  [[ $# -lt 1 ]] && _printUsage
+  initDefaultArgs
+  processArgs "$@"
+
+  checkMysqlServiceRunning
+
+  getMysqlInformation
+
+  doAction "$@"
+  printSuccessMessage
+  exit 0
+}
+
+main "$@"
+
+_debug set +x

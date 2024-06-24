@@ -121,6 +121,7 @@ function initDefaultArgs() {
     APP_PHP='php'
     PHP_INI_LOCATION="${dkc_dir}/config/php/custom.ini"
   fi
+
   XDEBUG_STATUS=
 }
 
@@ -165,10 +166,10 @@ function checkPhpServiceRunning() {
 
 function statusXdebug() {
   if [[ $(docker compose exec ${APP_PHP} php -i | grep xdebug) ]]; then
-    _warning "${APP_PHP} - Xdebug status: Enabled"
+    _warning "Service ${APP_PHP} - Xdebug status: Enabled"
     XDEBUG_STATUS=1
   else
-    _warning "${APP_PHP} - Xdebug status: Disabled"
+    _warning "Service ${APP_PHP} - Xdebug status: Disabled"
     XDEBUG_STATUS=0
   fi
 }
