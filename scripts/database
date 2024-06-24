@@ -100,24 +100,13 @@ Version $VERSION
 ./scripts/$(basename "$0") [OPTION] [ARG]...
 
     Options:
+        exec                      Exec databases container.
         list                      List databases.
         create                    Create database.
         export                    Export database.
         import                    Import database.
         drop                      Drop database.
         -h, --help                Display this help and exit.
-
-    Arg:
-      list:
-      create:
-        --db-name             Database name need to create.
-      export:
-        --db-name             Database name need to export.
-      drop:
-        --db-name             Database name need to drop.
-      import:
-        --source                    Name of the database backup file (in database/import folder) use for import.
-        --target                    Name of the target database name import to.
 
     Examples:
       Exec database:
@@ -141,46 +130,16 @@ function processArgs() {
   create | drop)
     COMMAND="$1"
     DATABASE_NAME="$2"
-    for arg in "${@:3}"; do
-      case $arg in
-      --db-name=*)
-        DATABASE_NAME="${arg#*=}"
-        ;;
-      *)
-        _printUsage
-        ;;
-      esac
-    done
     ;;
   export)
     COMMAND="$1"
     DATABASE_NAME="$2"
     DATABASE_EXPORT_TARGET_NAME="$3"
-    for arg in "${@:3}"; do
-      case $arg in
-      --db-name=*)
-        DATABASE_NAME="${arg#*=}"
-        ;;
-      --target=* | -t=*)
-        DATABASE_EXPORT_TARGET_NAME="${arg#*=}"
-        ;;
-      esac
-    done
     ;;
   import)
     COMMAND="$1"
     DATABASE_NAME="$2"
     DATABASE_IMPORT_SOURCE_NAME="$3"
-    for arg in "${@:3}"; do
-      case $arg in
-      --source=* | -s=*)
-        DATABASE_IMPORT_SOURCE_NAME="${arg#*=}"
-        ;;
-      -db-name=* | -db=*)
-        DATABASE_NAME="${arg#*=}"
-        ;;
-      esac
-    done
     ;;
   list)
     COMMAND="$1"
@@ -223,9 +182,7 @@ function checkDatabaseFileName() {
 }
 
 function checkMysqlServiceRunning() {
-  if [[ $(docker compose ps --services --filter "status=running" | grep -E "\bmysql\b") ]]; then
-    _success "Service mysql is running"
-  else
+  if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\bmysql\b") ]]; then
     _error "Service mysql is not running, please start it!" && exit 1
   fi
 }

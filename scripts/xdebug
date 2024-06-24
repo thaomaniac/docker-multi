@@ -121,13 +121,12 @@ function initDefaultArgs() {
     APP_PHP='php'
     PHP_INI_LOCATION="${dkc_dir}/config/php/custom.ini"
   fi
-
   XDEBUG_STATUS=
 }
 
 function restartPhpService() {
   _arrow "Reload service ${APP_PHP}"
-  docker compose restart ${APP_PHP} || _die "${APP_PHP} cannot reload."
+  docker compose restart "${APP_PHP}" || _die "${APP_PHP} cannot reload."
 }
 
 function enableXdebug() {
@@ -157,9 +156,7 @@ function disableXdebug() {
 }
 
 function checkPhpServiceRunning() {
-  if [[ $(docker compose ps --services --filter "status=running" | grep -E "\b${APP_PHP}\b") ]]; then
-    _success "Service '${APP_PHP}' is running"
-  else
+  if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\b${APP_PHP}\b") ]]; then
     _error "Service '${APP_PHP}' is not running, please start it!" && exit 1
   fi
 }
