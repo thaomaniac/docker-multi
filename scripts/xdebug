@@ -94,7 +94,6 @@ Version $VERSION
 }
 
 function processArgs() {
-  APP_PHP='php'
   case $1 in
   php*)
     APP_PHP="$1"
@@ -102,7 +101,9 @@ function processArgs() {
     ;;
   enable | disable | status | on | off)
     COMMAND="$1"
-    APP_PHP="$2"
+    if [[ "$2" ]]; then
+      APP_PHP="$2"
+    fi
     ;;
   *)
     _printUsage
@@ -111,7 +112,15 @@ function processArgs() {
 }
 
 function initDefaultArgs() {
-  PHP_INI_LOCATION="$(pwd)/config/php/${APP_PHP}/custom.ini"
+  script_path=$(realpath "$0")
+  script_dir=$(dirname "$script_path")
+  dkc_dir=$(dirname "$script_dir")
+
+  PHP_INI_LOCATION="${dkc_dir}/config/php/${APP_PHP}/custom.ini"
+  if [[ -z "$APP_PHP" ]]; then
+    APP_PHP='php'
+    PHP_INI_LOCATION="${dkc_dir}/config/php/custom.ini"
+  fi
   XDEBUG_STATUS=
 }
 
@@ -147,10 +156,10 @@ function disableXdebug() {
 }
 
 function checkPhpServiceRunning() {
-  if [[ $(docker compose ps --services --filter "status=running" | grep ${APP_PHP}) ]]; then
-    _success "Service ${APP_PHP} is running"
+  if [[ $(docker compose ps --services --filter "status=running" | grep -E "\b${APP_PHP}\b") ]]; then
+    _success "Service '${APP_PHP}' is running"
   else
-    _error "Service ${APP_PHP} is not running" && exit 1
+    _error "Service '${APP_PHP}' is not running, please start it!" && exit 1
   fi
 }
 
