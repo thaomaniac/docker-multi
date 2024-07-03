@@ -212,7 +212,7 @@ function execMysqlDatabase() {
 }
 
 function listMysqlDatabase() {
-  docker compose exec mysql mysql -u root --password=${rootPass} -e "show databases"
+  docker compose exec mysql mysql -u root --password=${rootPass} -e "show databases" --table 2>&1 | grep -v "Using a password"
 }
 
 function createMysqlDatabase() {
@@ -222,7 +222,6 @@ function createMysqlDatabase() {
   else
     docker compose exec mysql mysql -u root -p${rootPass} --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password"
     _success "Database '${DATABASE_NAME}' has been created"
-    listMysqlDatabase
   fi
 }
 
@@ -318,7 +317,6 @@ function main() {
   getMysqlInformation
 
   doAction "$@"
-  printSuccessMessage
   exit 0
 }
 
