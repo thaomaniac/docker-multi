@@ -93,7 +93,6 @@ services:
 
   redis:
     image: redis:${REDIS_IMAGE_VERSION}
-    restart: always
     ports:
       - 6379:6379
     volumes:
