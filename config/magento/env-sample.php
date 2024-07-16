@@ -74,26 +74,10 @@ return [
     'cache' => [
         'frontend' => [
             'default' => [
-                'backend' => 'Cm_Cache_Backend_Redis',
-                'backend_options' => [
-                    'server' => 'redis',
-                    'database' => '1',
-                    'port' => '6379',
-                    'compress_data' => '1',
-                    'password' => ''
-                ],
-                'id_prefix' => ''
+                'id_prefix' => 'm2'
             ],
             'page_cache' => [
-                'backend' => 'Magento\\Framework\\Cache\\Backend\\Redis',
-                'backend_options' => [
-                    'server' => 'redis',
-                    'port' => '6379',
-                    'database' => '2',
-                    'compress_data' => '0',
-                    'password' => ''
-                ],
-                'id_prefix' => ''
+                'id_prefix' => 'm2'
             ]
         ],
         'allow_parallel_generation' => false
