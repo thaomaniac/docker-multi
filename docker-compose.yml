@@ -110,10 +110,22 @@ services:
       MH_STORAGE: maildir
       MH_MAILDIR_PATH: /home/mailhog
 
+  rabbitmq:
+    image: rabbitmq:${RABBITMQ_IMAGE_VERSION}
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
 volumes:
-  mailhog-data:
-  redis-data:
   elasticsearch-data:
+  redis-data:
+  mailhog-data:
+  rabbitmq-data:
 
 #networks:
 #  multiple:
