@@ -74,10 +74,10 @@ return [
     'cache' => [
         'frontend' => [
             'default' => [
-                'id_prefix' => 'm2'
+                'id_prefix' => 'm2_'
             ],
             'page_cache' => [
-                'id_prefix' => 'm2'
+                'id_prefix' => 'm2_'
             ]
         ],
         'allow_parallel_generation' => false
