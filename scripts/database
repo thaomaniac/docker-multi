@@ -189,9 +189,7 @@ function checkMysqlServiceRunning() {
 
 function checkDatabaseName() {
   DATABASE_PATTERN="^([[:alnum:]]([[:alnum:]_]{0,61}[[:alnum:]]))$"
-  if [[ ${DATABASE_NAME} =~ $DATABASE_PATTERN ]]; then
-    _success "Good database name"
-  else
+  if [[ ! ${DATABASE_NAME} =~ $DATABASE_PATTERN ]]; then
     _error "Invalid Database name, please check or choose other name!!"
     exit 1
   fi
