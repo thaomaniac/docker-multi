@@ -1,0 +1,6 @@
+services:
+  redis:
+    entrypoint: /bin/true
+
+  rabbitmq:
+    entrypoint: /bin/true
