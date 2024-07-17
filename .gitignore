@@ -1,6 +1,7 @@
 /.idea
-.env
-.php-map
+/.env
+/.php-map
+/docker-compose.override.yml
 /config/nginx/conf.d/*
 !/config/nginx/conf.d/00-default.conf
 !/config/nginx/conf.d/sampleconf
