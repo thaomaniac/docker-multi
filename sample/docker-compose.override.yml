@@ -1,6 +1,6 @@
 services:
   redis:
-    entrypoint: /bin/true
+    entrypoint: /bin/true # Skip start container
 
   rabbitmq:
     entrypoint: /bin/true

@@ -157,7 +157,7 @@ function disableXdebug() {
 
 function checkPhpServiceRunning() {
   if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\b${APP_PHP}\b") ]]; then
-    _error "Service '${APP_PHP}' is not running, please start it!" && exit 1
+    _error "Service '${APP_PHP}' is not running" && exit 1
   fi
 }
 

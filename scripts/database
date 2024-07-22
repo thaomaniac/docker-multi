@@ -183,7 +183,7 @@ function checkDatabaseFileName() {
 
 function checkMysqlServiceRunning() {
   if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\bmysql\b") ]]; then
-    _error "Service mysql is not running, please start it!" && exit 1
+    _error "Service mysql is not running" && exit 1
   fi
 }
 
