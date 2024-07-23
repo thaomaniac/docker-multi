@@ -1,0 +1,155 @@
+#!/usr/bin/env bash
+
+## Uncomment it for debugging purpose
+###set -o errexit
+#set -o pipefail
+#set -o nounset
+#set -o xtrace
+
+#
+# VARIABLES
+#
+_bold=$(tput bold)
+_underline=$(tput sgr 0 1)
+_reset=$(tput sgr0)
+
+_purple=$(tput setaf 171)
+_red=$(tput setaf 1)
+_green=$(tput setaf 76)
+_tan=$(tput setaf 3)
+_blue=$(tput setaf 38)
+
+#
+# HEADERS & LOGGING
+#
+function _debug() {
+  if [[ "$DEBUG" = 1 ]]; then
+    "$@"
+  fi
+}
+
+function _arrow() {
+  printf '➜ %s\n' "$@"
+}
+
+function _success() {
+  printf '%s✔ %s%s\n' "$_green" "$@" "$_reset"
+}
+
+function _error() {
+  printf '%s✖ %s%s\n' "$_red" "$@" "$_reset"
+}
+
+function _warning() {
+  printf '%s➜ %s%s\n' "$_tan" "$@" "$_reset"
+}
+
+function _underline() {
+  printf '%s%s%s%s\n' "$_underline" "$_bold" "$@" "$_reset"
+}
+
+function _bold() {
+  printf '%s%s%s\n' "$_bold" "$@" "$_reset"
+}
+
+function _die() {
+  _error "$@"
+  exit 1
+}
+
+function _printUsage() {
+  echo -n "Docker Magento tools
+Version $VERSION
+
+./scripts/$(basename "$0") [OPT] [ARG]...
+
+    Options:
+        -p, --project   Project name.
+
+    Examples:
+      Auto identify project
+        ./scripts/$(basename "$0") cache:clean
+
+      With project name
+        ./scripts/$(basename "$0") --project <project_name> cache:clean
+"
+  exit 1
+}
+
+function initDefaultArgs() {
+  script_path=$(realpath "$0")
+  script_dir=$(dirname "$script_path")
+  dkc_dir=$(dirname "$script_dir")
+
+  project_parent_dir="${dkc_dir}/www"
+}
+
+mappingPhpService() {
+  local file="${dkc_dir}/.php-map"
+  PHP_SERVICE='php'
+  if [ -f "$file" ]; then
+    while IFS=: read -r folder phpService; do
+      if [[ "$PROJECT_NAME" == "$folder" ]]; then
+        PHP_SERVICE=$phpService
+        break
+      fi
+    done <"$file"
+  fi
+}
+
+function processArgs() {
+  case $1 in
+    -p | --project)
+      PROJECT_NAME="$2"
+      project_dir=$project_parent_dir/$PROJECT_NAME
+      shift 2
+      ;;
+    *)
+      PROJECT_NAME=${PWD##*/}
+      project_dir=${PWD}
+      ;;
+  esac
+
+  if [ ! -f "$project_dir/bin/magento" ]; then
+    _error "File does not exist: $project_dir/bin/magento"
+  fi
+
+  MAGENTO_COMMAND=$*
+  mappingPhpService
+  checkPhpServiceRunning
+  local workingDir=$(docker inspect --format='{{.Config.WorkingDir}}' "$(docker compose ps -q "$PHP_SERVICE")")
+  MAGENTO_ROOT_DIR="$workingDir"/$PROJECT_NAME
+}
+
+function checkPhpServiceRunning() {
+  if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\b${PHP_SERVICE}\b") ]]; then
+    _error "Service \"${PHP_SERVICE}\" is not running" && exit 1
+  fi
+}
+
+function doAction() {
+    docker compose exec -T "$PHP_SERVICE" bash -c "cd $MAGENTO_ROOT_DIR && bin/magento $MAGENTO_COMMAND"
+}
+
+# Main
+export LC_CTYPE=C
+export LANG=C
+
+DEBUG=0
+_debug set -x #on
+VERSION="1"
+
+function main() {
+
+  [[ $# -lt 1 ]] && _printUsage
+
+  initDefaultArgs
+  processArgs "$@"
+
+  doAction
+  exit 0
+}
+
+main "$@"
+
+_debug set +x #off
