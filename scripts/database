@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-#
-# Script to create virtual host for Nginx server
-#
-
-# UnComment it if bash is lower than 4.x version
-shopt -s extglob
 
 ################################################################################
 # CORE FUNCTIONS - Do not edit
@@ -161,18 +155,19 @@ function initDefaultArgs() {
 function getMysqlInformation() {
   containerNameDB=$(docker inspect -f '{{.Name}}' $(docker compose ps -q mysql) | cut -c2-)
 
-  mysqlUser=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' $containerNameDB | grep MYSQL_USER)
+  mysqlUser=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' "$containerNameDB" | grep MYSQL_USER)
   user="${mysqlUser/MYSQL_USER=/$replace}"
 
-  mysqlPass=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' $containerNameDB | grep MYSQL_PASSWORD)
+  mysqlPass=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' "$containerNameDB" | grep MYSQL_PASSWORD)
   pass="${mysqlPass/MYSQL_PASSWORD=/$replace}"
 
-  mysqRootPass=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' $containerNameDB | grep MYSQL_ROOT_PASSWORD)
-  rootPass="${mysqRootPass/MYSQL_ROOT_PASSWORD=/$replace}"
+  mysqlRootPass=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' "$containerNameDB" | grep MYSQL_ROOT_PASSWORD)
+  rootPass="${mysqlRootPass/MYSQL_ROOT_PASSWORD=/$replace}"
+  password=$rootPass
 }
 
 function checkDatabaseFileName() {
-  if [[ $(echo ${DATABASE_IMPORT_SOURCE_NAME} | awk -F\. '{print $NF}') != "sql" ]]; then
+  if [[ $(echo "${DATABASE_IMPORT_SOURCE_NAME}" | awk -F\. '{print $NF}') != "sql" ]]; then
     _error "Database source file name extension invalid, must be end .sql. EG: abc.sql"
     exit 1
   elif [[ ! -f ${DATABASE_IMPORT_SOURCE_NAME} ]]; then
@@ -183,7 +178,7 @@ function checkDatabaseFileName() {
 
 function checkMysqlServiceRunning() {
   if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\bmysql\b") ]]; then
-    _error "Service mysql is not running" && exit 1
+    _error "Service \"mysql\" is not running" && exit 1
   fi
 }
 
@@ -197,7 +192,7 @@ function checkDatabaseName() {
 
 function checkDatabaseExist() {
   local db_name=$1
-  if [[ $(docker compose exec mysql mysql -u root -p${rootPass} --skip-column-names -e "show databases like '${db_name}'" 2>&1 | grep -v "Using a password" | grep -o "${db_name}") == ${db_name} ]]; then
+  if [[ $(docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "show databases like '${db_name}'" 2>&1 | grep -v "Using a password" | grep -o "${db_name}") == "${db_name}" ]]; then
     return 0
   else
     return 1
@@ -206,27 +201,27 @@ function checkDatabaseExist() {
 
 function execMysqlDatabase() {
   shift
-  docker compose exec mysql mysql -u root -p${rootPass} "$@"
+  docker compose exec mysql mysql -u root -p"${password}" "$@"
 }
 
 function listMysqlDatabase() {
-  docker compose exec mysql mysql -u root --password=${rootPass} -e "show databases" --table 2>&1 | grep -v "Using a password"
+  docker compose exec mysql mysql -u root --password="${password}" -e "show databases" --table 2>&1 | grep -v "Using a password"
 }
 
 function createMysqlDatabase() {
   checkDatabaseName
   if checkDatabaseExist "${DATABASE_NAME}"; then
-    _error "Can't create database '${DATABASE_NAME}'; database exists!" && exit 1
+    _error "Can't create database \"${DATABASE_NAME}\"; database exists!" && exit 1
   else
-    docker compose exec mysql mysql -u root -p${rootPass} --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password"
-    _success "Database '${DATABASE_NAME}' has been created"
+    docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password"
+    _success "Database \"${DATABASE_NAME}\" has been created"
   fi
 }
 
 function dropMysqlDatabase() {
   if askYesOrNo $"Warning! Do you really want to drop database '${DATABASE_NAME}' ?"; then
-    docker compose exec mysql mysql -u root -p${rootPass} --skip-column-names -e "drop database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password"
-    _success "Database '${DATABASE_NAME}' has been dropped successfully."
+    docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "drop database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password"
+    _success "Database \"${DATABASE_NAME}\" has been dropped successfully."
   else
     _warning "Canceled"
     exit 1
@@ -237,10 +232,10 @@ function importMysqlDatabase() {
   checkDatabaseFileName
   if checkDatabaseExist "${DATABASE_NAME}"; then
     _arrow "Importing database"
-    docker compose exec -T mysql mysql -u root -p${rootPass} ${DATABASE_NAME} <${DATABASE_IMPORT_SOURCE_NAME} 2>&1 | grep -v "Using a password"
-    _success "Database name ${DATABASE_NAME} imported"
+    docker compose exec -T mysql mysql -u root -p"${password}" "${DATABASE_NAME}" <"${DATABASE_IMPORT_SOURCE_NAME}" 2>&1 | grep -v "Using a password"
+    _success "Database name \"${DATABASE_NAME}\" imported"
   else
-    _error "Unknown database ${DATABASE_NAME}. Please check it!!"
+    _error "Unknown database \"${DATABASE_NAME}\". Please check it!!"
     exit 1
   fi
 }
@@ -252,10 +247,10 @@ function exportMysqlDatabase() {
       DATABASE_EXPORT_TARGET_NAME=$(pwd)/${DATABASE_NAME}-${BACKDATE}.sql
     fi
     _arrow "Creating SQL file: $DATABASE_EXPORT_TARGET_NAME"
-    docker compose exec -T mysql /usr/bin/mysqldump -u root --password=${rootPass} ${DATABASE_NAME} 2>&1 | grep -v "Using a password" >$DATABASE_EXPORT_TARGET_NAME
+    docker compose exec -T mysql /usr/bin/mysqldump -u root --password="${password}" "${DATABASE_NAME}" 2>&1 | grep -v "Using a password" >"$DATABASE_EXPORT_TARGET_NAME"
     _success "Your database exported"
   else
-    _error "Unknown database ${DATABASE_NAME}. Please check it!!"
+    _error "Unknown database \"${DATABASE_NAME}\". Please check it!!"
     exit 1
   fi
 }
@@ -264,10 +259,6 @@ function _statusCheck() {
   if [[ $? -ne 0 ]]; then
     _error "Failed!" && exit 1
   fi
-}
-
-function printSuccessMessage() {
-  _success "Complete!"
 }
 
 function doAction() {
