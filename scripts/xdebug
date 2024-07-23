@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-#
-# Script to create virtual host for Nginx server
-#
-
-# UnComment it if bash is lower than 4.x version
-shopt -s extglob
 
 ################################################################################
 # CORE FUNCTIONS - Do not edit
@@ -125,7 +119,7 @@ function initDefaultArgs() {
 }
 
 function restartPhpService() {
-  _arrow "Reload service ${APP_PHP}"
+  _arrow "Reload service \"${APP_PHP}\""
   docker compose restart "${APP_PHP}" || _die "${APP_PHP} cannot reload."
 }
 
@@ -138,7 +132,7 @@ function enableXdebug() {
   sed -i 's/;zend_extension=xdebug/zend_extension=xdebug/g' "$PHP_INI_LOCATION" || _die "Cannot change Xdebug setting"
   sed -i 's/;zend_extension = xdebug/zend_extension = xdebug/g' "$PHP_INI_LOCATION" || _die "Cannot change Xdebug setting"
 
-  _success "Xdebug enabled for ${APP_PHP}"
+  _success "Xdebug enabled for \"${APP_PHP}\""
   restartPhpService
 }
 
@@ -148,25 +142,25 @@ function disableXdebug() {
     _warning "Xdebug is currently Disabled, no need to do anything" && exit 1
   fi
 
-  sed -i 's/zend_extension=xdebug/;zend_extension=xdebug/g;' "$PHP_INI_LOCATION" || _die "Cannot change Xdebug setting"
+  sed -i 's/zend_extension=xdebug/;zend_extension=xdebug/g' "$PHP_INI_LOCATION" || _die "Cannot change Xdebug setting"
   sed -i 's/zend_extension = xdebug/;zend_extension = xdebug/g' "$PHP_INI_LOCATION" || _die "Cannot change Xdebug setting"
 
-  _success "Xdebug disabled for ${APP_PHP}"
+  _success "Xdebug disabled for \"${APP_PHP}\""
   restartPhpService
 }
 
 function checkPhpServiceRunning() {
   if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\b${APP_PHP}\b") ]]; then
-    _error "Service '${APP_PHP}' is not running" && exit 1
+    _error "Service \"${APP_PHP}\" is not running" && exit 1
   fi
 }
 
 function statusXdebug() {
   if [[ $(docker compose exec ${APP_PHP} php -i | grep xdebug) ]]; then
-    _warning "Service ${APP_PHP} - Xdebug status: Enabled"
+    _warning "Service \"${APP_PHP}\" - Xdebug status: Enabled"
     XDEBUG_STATUS=1
   else
-    _warning "Service ${APP_PHP} - Xdebug status: Disabled"
+    _warning "Service \"${APP_PHP}\" - Xdebug status: Disabled"
     XDEBUG_STATUS=0
   fi
 }
@@ -208,7 +202,6 @@ function main() {
   checkPhpServiceRunning
 
   doAction
-  _success "Complete!"
   exit 0
 }
 
