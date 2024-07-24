@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-################################################################################
-# CORE FUNCTIONS - Do not edit
-################################################################################
+set -e
 
 ## Uncomment it for debugging purpose
 ###set -o errexit
@@ -61,9 +59,6 @@ function _die() {
   exit 1
 }
 
-################################################################################
-# SCRIPT FUNCTIONS
-################################################################################
 function _printUsage() {
   echo -n "Docker Xdebug tools
 Version $VERSION
@@ -87,7 +82,17 @@ Version $VERSION
   exit 1
 }
 
+function initDefaultArgs() {
+  script_path=$(realpath "$0")
+  script_dir=$(dirname "$script_path")
+  dkc_dir=$(dirname "$script_dir")
+
+  XDEBUG_STATUS=
+}
+
 function processArgs() {
+  initDefaultArgs
+
   case $1 in
   php*)
     APP_PHP="$1"
@@ -103,19 +108,12 @@ function processArgs() {
     _printUsage
     ;;
   esac
-}
-
-function initDefaultArgs() {
-  script_path=$(realpath "$0")
-  script_dir=$(dirname "$script_path")
-  dkc_dir=$(dirname "$script_dir")
 
   PHP_INI_LOCATION="${dkc_dir}/config/php/${APP_PHP}/custom.ini"
   if [[ -z "$APP_PHP" ]]; then
     APP_PHP='php'
     PHP_INI_LOCATION="${dkc_dir}/config/php/custom.ini"
   fi
-  XDEBUG_STATUS=
 }
 
 function restartPhpService() {
@@ -123,10 +121,20 @@ function restartPhpService() {
   docker compose restart "${APP_PHP}" || _die "${APP_PHP} cannot reload."
 }
 
+function statusXdebug() {
+  if [[ $(docker compose exec ${APP_PHP} php -i | grep xdebug) ]]; then
+    _arrow "Service \"${APP_PHP}\" - Xdebug status: Enabled"
+    XDEBUG_STATUS=1
+  else
+    _arrow "Service \"${APP_PHP}\" - Xdebug status: Disabled"
+    XDEBUG_STATUS=0
+  fi
+}
+
 function enableXdebug() {
   statusXdebug
   if [[ $XDEBUG_STATUS == 1 ]]; then
-    _warning "Xdebug is currently Enabled, no need to do anything" && exit 1
+    _warning "Xdebug is currently Enabled, no need to do anything" && exit
   fi
 
   sed -i 's/;zend_extension=xdebug/zend_extension=xdebug/g' "$PHP_INI_LOCATION" || _die "Cannot change Xdebug setting"
@@ -139,7 +147,7 @@ function enableXdebug() {
 function disableXdebug() {
   statusXdebug
   if [[ $XDEBUG_STATUS == 0 ]]; then
-    _warning "Xdebug is currently Disabled, no need to do anything" && exit 1
+    _warning "Xdebug is currently Disabled, no need to do anything" && exit
   fi
 
   sed -i 's/zend_extension=xdebug/;zend_extension=xdebug/g' "$PHP_INI_LOCATION" || _die "Cannot change Xdebug setting"
@@ -152,16 +160,6 @@ function disableXdebug() {
 function checkPhpServiceRunning() {
   if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\b${APP_PHP}\b") ]]; then
     _error "Service \"${APP_PHP}\" is not running" && exit 1
-  fi
-}
-
-function statusXdebug() {
-  if [[ $(docker compose exec ${APP_PHP} php -i | grep xdebug) ]]; then
-    _warning "Service \"${APP_PHP}\" - Xdebug status: Enabled"
-    XDEBUG_STATUS=1
-  else
-    _warning "Service \"${APP_PHP}\" - Xdebug status: Disabled"
-    XDEBUG_STATUS=0
   fi
 }
 
@@ -182,9 +180,6 @@ function doAction() {
   esac
 }
 
-################################################################################
-# Main
-################################################################################
 export LC_CTYPE=C
 export LANG=C
 
@@ -197,7 +192,6 @@ function main() {
   [[ $# -lt 1 ]] && _printUsage
 
   processArgs "$@"
-  initDefaultArgs
 
   checkPhpServiceRunning
 

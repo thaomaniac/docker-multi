@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-################################################################################
-# CORE FUNCTIONS - Do not edit
-################################################################################
+set -e
 
 ## Uncomment it for debugging purpose
 ###set -o errexit
@@ -84,9 +82,6 @@ function askYesOrNo {
   done
 }
 
-################################################################################
-# SCRIPT FUNCTIONS
-################################################################################
 function _printUsage() {
   echo -n "Docker Mysql tools
 Version $VERSION
@@ -120,6 +115,8 @@ Version $VERSION
 }
 
 function processArgs() {
+  initDefaultArgs
+
   case $1 in
   create | drop)
     COMMAND="$1"
@@ -255,12 +252,6 @@ function exportMysqlDatabase() {
   fi
 }
 
-function _statusCheck() {
-  if [[ $? -ne 0 ]]; then
-    _error "Failed!" && exit 1
-  fi
-}
-
 function doAction() {
   case $COMMAND in
   create)
@@ -282,8 +273,6 @@ function doAction() {
     execMysqlDatabase "$@"
     ;;
   esac
-
-  _statusCheck
 }
 
 ################################################################################
@@ -298,7 +287,6 @@ VERSION="1"
 
 function main() {
   [[ $# -lt 1 ]] && _printUsage
-  initDefaultArgs
   processArgs "$@"
 
   checkMysqlServiceRunning

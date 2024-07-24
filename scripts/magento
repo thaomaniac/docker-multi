@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 ## Uncomment it for debugging purpose
 ###set -o errexit
 #set -o pipefail
@@ -76,17 +78,22 @@ Version $VERSION
   exit 1
 }
 
+function checkPhpServiceRunning() {
+  if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\b${PHP_SERVICE}\b") ]]; then
+    _error "Service \"${PHP_SERVICE}\" is not running" && exit 1
+  fi
+}
+
 function initDefaultArgs() {
   script_path=$(realpath "$0")
   script_dir=$(dirname "$script_path")
   dkc_dir=$(dirname "$script_dir")
 
-  project_parent_dir="${dkc_dir}/www"
+  #  project_parent_dir="${dkc_dir}/www"
 }
 
 mappingPhpService() {
   local file="${dkc_dir}/.php-map"
-  PHP_SERVICE='php'
   if [ -f "$file" ]; then
     while IFS=: read -r folder phpService; do
       if [[ "$PROJECT_NAME" == "$folder" ]]; then
@@ -95,36 +102,31 @@ mappingPhpService() {
       fi
     done <"$file"
   fi
+  if [[ -z "$PHP_SERVICE" ]]; then
+    PHP_SERVICE='php'
+    unset PROJECT_NAME
+  fi
 }
 
 function processArgs() {
+  initDefaultArgs
+
   case $1 in
   -p | --project)
     PROJECT_NAME="$2"
-    project_dir=$project_parent_dir/$PROJECT_NAME
     shift 2
     ;;
   *)
     PROJECT_NAME=${PWD##*/}
-    project_dir=${PWD}
     ;;
   esac
-
-  if [ ! -f "$project_dir/bin/magento" ]; then
-    _error "File does not exist: $project_dir/bin/magento"
-  fi
 
   MAGENTO_COMMAND=$*
   mappingPhpService
   checkPhpServiceRunning
-  local workingDir=$(docker inspect --format='{{.Config.WorkingDir}}' "$(docker compose ps -q "$PHP_SERVICE")")
+  containerId=$(docker compose ps -q "$PHP_SERVICE")
+  workingDir=$(docker inspect --format='{{.Config.WorkingDir}}' "$containerId")
   MAGENTO_ROOT_DIR="$workingDir"/$PROJECT_NAME
-}
-
-function checkPhpServiceRunning() {
-  if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\b${PHP_SERVICE}\b") ]]; then
-    _error "Service \"${PHP_SERVICE}\" is not running" && exit 1
-  fi
 }
 
 function doAction() {
@@ -143,7 +145,6 @@ function main() {
 
   [[ $# -lt 1 ]] && _printUsage
 
-  initDefaultArgs
   processArgs "$@"
 
   doAction
