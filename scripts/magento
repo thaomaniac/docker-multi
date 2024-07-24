@@ -99,15 +99,15 @@ mappingPhpService() {
 
 function processArgs() {
   case $1 in
-    -p | --project)
-      PROJECT_NAME="$2"
-      project_dir=$project_parent_dir/$PROJECT_NAME
-      shift 2
-      ;;
-    *)
-      PROJECT_NAME=${PWD##*/}
-      project_dir=${PWD}
-      ;;
+  -p | --project)
+    PROJECT_NAME="$2"
+    project_dir=$project_parent_dir/$PROJECT_NAME
+    shift 2
+    ;;
+  *)
+    PROJECT_NAME=${PWD##*/}
+    project_dir=${PWD}
+    ;;
   esac
 
   if [ ! -f "$project_dir/bin/magento" ]; then
@@ -128,7 +128,7 @@ function checkPhpServiceRunning() {
 }
 
 function doAction() {
-    docker compose exec -T "$PHP_SERVICE" bash -c "cd $MAGENTO_ROOT_DIR && bin/magento $MAGENTO_COMMAND"
+  docker compose exec -T "$PHP_SERVICE" bash -c "cd $MAGENTO_ROOT_DIR && bin/magento $MAGENTO_COMMAND"
 }
 
 # Main
