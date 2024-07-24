@@ -1,4 +1,5 @@
 <?php
+//https://experienceleague.adobe.com/en/docs/commerce-operations/configuration-guide/files/config-reference-envphp
 return [
     'backend' => [
         'frontName' => 'admin'
@@ -10,23 +11,13 @@ return [
         'consumers_wait_for_messages' => 1
     ],
     'db' => [
+        'table_prefix' => '',
         'connection' => [
-            'indexer' => [
-                'host' => 'mysql',
-                'dbname' => 'magento',
-                'username' => 'root',
-                'password' => '1',
-                'model' => 'mysql4',
-                'engine' => 'innodb',
-                'initStatements' => 'SET NAMES utf8;',
-                'active' => '1',
-                'persistent' => null
-            ],
             'default' => [
                 'host' => 'mysql',
                 'dbname' => 'magento',
                 'username' => 'root',
-                'password' => '1',
+                'password' => 'root',
                 'model' => 'mysql4',
                 'engine' => 'innodb',
                 'initStatements' => 'SET NAMES utf8;',
@@ -35,8 +26,7 @@ return [
                     1014 => false
                 ]
             ]
-        ],
-        'table_prefix' => ''
+        ]
     ],
     'crypt' => [
         'key' => '6f16f136edbb237f765c1f4c26f40ef8'
