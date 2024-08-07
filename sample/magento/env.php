@@ -92,14 +92,14 @@ return [
                 'unsecure' => [
                     'base_url' => 'https://magento.local/',
                     'base_link_url' => '{{unsecure_base_url}}',
-                    'base_static_url' => null,
-                    'base_media_url' => null
+                    'base_static_url' => '',
+                    'base_media_url' => ''
                 ],
                 'secure' => [
                     'base_url' => '{{unsecure_base_url}}',
                     'base_link_url' => '{{secure_base_url}}',
-                    'base_static_url' => null,
-                    'base_media_url' => null,
+                    'base_static_url' => '',
+                    'base_media_url' => '',
                     'use_in_frontend' => 0,
                     'use_in_adminhtml' => 0
                 ],
@@ -165,14 +165,14 @@ return [
         //            'unsecure' => [
         //                'base_url' => 'https://website1.local/',
         //                'base_link_url' => '{{unsecure_base_url}}',
-        //                'base_static_url' => null,
-        //                'base_media_url' => null
+        //                'base_static_url' => '',
+        //                'base_media_url' => ''
         //            ],
         //            'secure' => [
         //                'base_url' => '{{unsecure_base_url}}',
         //                'base_link_url' => '{{secure_base_url}}',
-        //                'base_static_url' => null,
-        //                'base_media_url' => null,
+        //                'base_static_url' => '',
+        //                'base_media_url' => '',
         //                'use_in_frontend' => 0,
         //                'use_in_adminhtml' => 0
         //            ]
