@@ -210,14 +210,14 @@ function createMysqlDatabase() {
   if checkDatabaseExist "${DATABASE_NAME}"; then
     _error "Can't create database \"${DATABASE_NAME}\"; database exists!" && exit 1
   else
-    docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password"
+    docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database \"${DATABASE_NAME}\" has been created"
   fi
 }
 
 function dropMysqlDatabase() {
   if askYesOrNo $"Warning! Do you really want to drop database '${DATABASE_NAME}' ?"; then
-    docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "drop database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password"
+    docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "drop database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database \"${DATABASE_NAME}\" has been dropped successfully."
   else
     _warning "Canceled"
@@ -229,7 +229,7 @@ function importMysqlDatabase() {
   checkDatabaseFileName
   if checkDatabaseExist "${DATABASE_NAME}"; then
     _arrow "Importing database"
-    docker compose exec -T mysql mysql -u root -p"${password}" "${DATABASE_NAME}" <"${DATABASE_IMPORT_SOURCE_NAME}" 2>&1 | grep -v "Using a password"
+    docker compose exec -T mysql mysql -u root -p"${password}" "${DATABASE_NAME}" <"${DATABASE_IMPORT_SOURCE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database name \"${DATABASE_NAME}\" imported"
   else
     _error "Unknown database \"${DATABASE_NAME}\". Please check it!!"
