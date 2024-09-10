@@ -109,10 +109,14 @@ return [
             ],
             'catalog' => [
                 'search' => [
-                    'engine' => 'elasticsearch7',
-                    'elasticsearch7_server_hostname' => 'elasticsearch',
-                    'elasticsearch7_server_port' => 9200,
-                    'elasticsearch7_index_prefix' => 'magento'
+                    'engine' => 'opensearch',
+                    'opensearch_server_hostname' => 'opensearch',
+                    'opensearch_server_port' => 9200,
+                    'opensearch_index_prefix' => 'magento',
+                    //'engine' => 'elasticsearch7',
+                    //'elasticsearch7_server_hostname' => 'elasticsearch',
+                    //'elasticsearch7_server_port' => 9200,
+                    //'elasticsearch7_index_prefix' => 'magento'
                 ]
             ],
             //'recaptcha_backend' => [
