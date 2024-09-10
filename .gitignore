@@ -5,7 +5,7 @@
 /config/nginx/conf.d/*
 !/config/nginx/conf.d/00-default.conf
 !/config/nginx/conf.d/sampleconf
-!/config/nginx/conf.d/phpmyadmin.conf
+!/config/nginx/conf.d/phpmyadminconf
 /config/nginx/m2conf/*
 !/config/nginx/m2conf/sample.conf
 /config/nginx/ssl/*
