@@ -76,7 +76,7 @@ services:
       - ./var/data/mysql:/var/lib/mysql:cached
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: phpmyadmin:${PHPMYADMIN_IMAGE_VERSION}
     ports:
       - 8080:80
     environment:
