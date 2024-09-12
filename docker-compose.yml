@@ -15,6 +15,18 @@ services:
       - ./www:/var/www:cached
       - ./var/log/nginx:/var/log/nginx
 
+  php73:
+    build:
+      context: ./build/php
+      dockerfile: php73.Dockerfile
+    ports:
+      - 9000
+    volumes:
+      - ./config/php/php73/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
+      - ./www:/var/www:cached
+    working_dir: /var/www
+    user: 'www-data'
+
   php74:
     build:
       context: ./build/php
@@ -53,6 +65,7 @@ services:
 
   mysql:
     image: mysql:${MYSQL_IMAGE_VERSION}
+#    command: --default-authentication-plugin=mysql_native_password
     ports:
       - 3306:3306
     environment:
