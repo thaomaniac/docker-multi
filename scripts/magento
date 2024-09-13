@@ -95,7 +95,7 @@ function initDefaultArgs() {
 mappingPhpService() {
   local file="${dkc_dir}/.php-map"
   if [ -f "$file" ]; then
-    while IFS="=" read -r folder phpService; do
+    while IFS=":" read -r folder phpService; do
       if [[ "$PROJECT_NAME" == "$folder" ]]; then
         PHP_SERVICE=$phpService
         break
