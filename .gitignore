@@ -10,9 +10,6 @@
 !/config/nginx/m2conf/sample.conf
 /config/nginx/ssl/*
 !/config/nginx/ssl/.gitkeep
-/var/data/*
-!/var/data/.gitkeep
-/var/log/*
-!/var/log/.gitkeep
+/var/
 /www/*
 !/www/.gitkeep
