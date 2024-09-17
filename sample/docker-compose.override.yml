@@ -1,4 +1,7 @@
 services:
+  mysql:
+    entrypoint: [ "echo", "Service mysql disabled" ] # Skip start container
+
   redis:
     entrypoint: /bin/true # Skip start container
 
