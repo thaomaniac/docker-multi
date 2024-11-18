@@ -73,7 +73,8 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - ./var/data/mysql:/var/lib/mysql:cached
+      - ./config/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
+      - ./var/lib/mysql:/var/lib/mysql:cached
 
   mariadb:
     image: mariadb:${MARIADB_IMAGE_VERSION}
@@ -85,6 +86,7 @@ services:
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
+      - ./config/mariadb/custom.cnf:/etc/mariadb/conf.d/custom.cnf:ro
       - ./var/lib/mariadb:/var/lib/mysql:cached
 
   phpmyadmin:

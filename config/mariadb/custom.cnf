@@ -1,0 +1,3 @@
+[mysqld]
+disable_log_bin
+# log-bin=OFF
