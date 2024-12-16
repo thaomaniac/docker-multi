@@ -1,0 +1,11 @@
+{
+  "gmail-25": {
+    "name": "gmail-25",
+    "host": "smtp.gmail.com",
+    "port": "25",
+    "email": "thaovt@magenest.com",
+    "username": "thaovt@magenest.com",
+    "password": "crcg znaa tony khcs",
+    "mechanism": "PLAIN"
+  }
+}

@@ -5,8 +5,8 @@ services:
     hostname: nginx
     image: nginx:${NGINX_IMAGE_VERSION}
     ports:
-      - 80:80
-      - 443:443
+      - "80:80"
+      - "443:443"
     volumes:
       - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./config/nginx/conf.d:/etc/nginx/conf.d:ro
@@ -20,7 +20,7 @@ services:
       context: ./build/php
       dockerfile: php73.Dockerfile
     ports:
-      - 9000
+      - "9000"
     volumes:
       - ./config/php/php73/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
       - ./www:/var/www:cached
@@ -32,7 +32,7 @@ services:
       context: ./build/php
       dockerfile: php74.Dockerfile
     ports:
-      - 9000
+      - "9000"
     volumes:
       - ./config/php/php74/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
       - ./www:/var/www:cached
@@ -44,7 +44,7 @@ services:
       context: ./build/php
       dockerfile: php81.Dockerfile
     ports:
-      - 9000
+      - "9000"
     volumes:
       - ./config/php/php81/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
       - ./www:/var/www:cached
@@ -56,7 +56,7 @@ services:
       context: ./build/php
       dockerfile: php82.Dockerfile
     ports:
-      - 9000
+      - "9000"
     volumes:
       - ./config/php/php82/custom.ini:/usr/local/etc/php/conf.d/php-custom.ini:ro
       - ./www:/var/www:cached
@@ -67,7 +67,7 @@ services:
     image: mysql:${MYSQL_IMAGE_VERSION}
     #    command: --default-authentication-plugin=mysql_native_password
     ports:
-      - 3306:3306
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
@@ -80,7 +80,7 @@ services:
     image: mariadb:${MARIADB_IMAGE_VERSION}
     #    command: --default-authentication-plugin=mysql_native_password
     ports:
-      - 3307:3306
+      - "3307:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_USER: ${MYSQL_USER}
@@ -92,9 +92,9 @@ services:
   phpmyadmin:
     image: phpmyadmin:${PHPMYADMIN_IMAGE_VERSION}
     ports:
-      - 8080:80
+      - "8080:80"
     environment:
-      PMA_HOSTS: mariadb,mysql
+      PMA_HOSTS: mysql,mariadb
       PMA_PMADB: phpmyadmin
     volumes:
       - ./config/phpmyadmin/conf.d:/etc/phpmyadmin/conf.d
@@ -102,7 +102,7 @@ services:
   elasticsearch:
     image: elasticsearch:${ELASTICSEARCH_IMAGE_VERSION}
     ports:
-      - 9200:9200
+      - "9200:9200"
     environment:
       - discovery.type=single-node
     volumes:
@@ -145,13 +145,13 @@ services:
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     ports:
-      - 9201:9200
-      - 9600:9600
+      - "9201:9200"
+      - "9600:9600"
 
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:${OPENSEARCH_DASHBOARDS_IMAGE_VERSION}
     ports:
-      - 5601:5601
+      - "5601:5601"
     expose:
       - '5601'
     environment:
@@ -163,7 +163,7 @@ services:
   redis:
     image: redis:${REDIS_IMAGE_VERSION}
     ports:
-      - 6379:6379
+      - "6379:6379"
     volumes:
       - redis-data:/data
 
@@ -171,18 +171,20 @@ services:
     build: ./build/mailhog
     volumes:
       - mailhog-data:/home/mailhog
+      - ./config/mailhog/outgoing-smtp.json:/outgoing-smtp.json
     ports:
-      - 1025:1025
-      - 8025:8025
+      - "1025:1025"
+      - "8025:8025"
     environment:
       MH_STORAGE: maildir
       MH_MAILDIR_PATH: /home/mailhog
+      MH_OUTGOING_SMTP: /outgoing-smtp.json
 
   rabbitmq:
     image: rabbitmq:${RABBITMQ_IMAGE_VERSION}
     ports:
-      - 5672:5672
-      - 15672:15672
+      - "5672:5672"
+      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
