@@ -83,7 +83,7 @@ function askYesOrNo {
 }
 
 function _printUsage() {
-  echo -n "Docker Mysql tools
+  echo -n "Docker Database tools
 Version $VERSION
 
 ./scripts/$(basename "$0") [OPTION] [ARG]...
@@ -147,19 +147,25 @@ function processArgs() {
 
 function initDefaultArgs() {
   BACKDATE="$(date +"%Y-%m-%d")"
+  DB_SERVICE="mysql"
+  DB_CLI="mysql"
+  DB_DUMP_CLI="mysqldump"
 }
 
-function getMysqlInformation() {
-  containerNameDB=$(docker inspect -f '{{.Name}}' $(docker compose ps -q mysql) | cut -c2-)
+function getDBInformation() {
+  containerId=$(docker compose ps -q "$DB_SERVICE")
+  containerNameDB=$(docker inspect -f '{{.Name}}' "$containerId" | cut -c2-)
 
-  mysqlUser=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' "$containerNameDB" | grep MYSQL_USER)
-  user="${mysqlUser/MYSQL_USER=/$replace}"
+  rootPassEnv=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' "$containerNameDB" | grep MYSQL_ROOT_PASSWORD)
+  rootPass="${rootPassEnv/MYSQL_ROOT_PASSWORD=/$replace}"
 
-  mysqlPass=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' "$containerNameDB" | grep MYSQL_PASSWORD)
-  pass="${mysqlPass/MYSQL_PASSWORD=/$replace}"
+  userNameEnv=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' "$containerNameDB" | grep MYSQL_USER)
+  userName="${userNameEnv/MYSQL_USER=/$replace}"
 
-  mysqlRootPass=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' "$containerNameDB" | grep MYSQL_ROOT_PASSWORD)
-  rootPass="${mysqlRootPass/MYSQL_ROOT_PASSWORD=/$replace}"
+  userPasswordEnv=$(docker inspect -f '{{range $index, $value := .Config.Env}}{{println $value}}{{end}}' "$containerNameDB" | grep MYSQL_PASSWORD)
+  userPassword="${userPasswordEnv/MYSQL_PASSWORD=/$replace}"
+
+  user_name=root
   password=$rootPass
 }
 
@@ -173,9 +179,9 @@ function checkDatabaseFileName() {
   fi
 }
 
-function checkMysqlServiceRunning() {
-  if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\bmysql\b") ]]; then
-    _error "Service \"mysql\" is not running" && exit 1
+function checkDBServiceRunning() {
+  if [[ ! $(docker compose ps --services --filter "status=running" | grep -E "\b$DB_SERVICE\b") ]]; then
+    _error "Service \"$DB_SERVICE\" is not running" && exit 1
   fi
 }
 
@@ -189,35 +195,35 @@ function checkDatabaseName() {
 
 function checkDatabaseExist() {
   local db_name=$1
-  if [[ $(docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "show databases like '${db_name}'" 2>&1 | grep -v "Using a password" | grep -o "${db_name}") == "${db_name}" ]]; then
+  if [[ $(docker compose exec $DB_SERVICE $DB_CLI -u root -p"${password}" --skip-column-names -e "show databases like '${db_name}'" 2>&1 | grep -v "Using a password" | grep -o "${db_name}") == "${db_name}" ]]; then
     return 0
   else
     return 1
   fi
 }
 
-function execMysqlDatabase() {
+function execDatabase() {
   shift
-  docker compose exec mysql mysql -u root -p"${password}" "$@"
+  docker compose exec $DB_SERVICE $DB_CLI -u root -p"${password}" "$@"
 }
 
-function listMysqlDatabase() {
-  docker compose exec mysql mysql -u root --password="${password}" -e "show databases" --table 2>&1 | grep -v "Using a password"
+function listDatabases() {
+  docker compose exec $DB_SERVICE $DB_CLI -u root --password="${password}" -e "show databases" --table 2>&1 | grep -v "Using a password"
 }
 
-function createMysqlDatabase() {
+function createDatabase() {
   checkDatabaseName
   if checkDatabaseExist "${DATABASE_NAME}"; then
     _error "Can't create database \"${DATABASE_NAME}\"; database exists!" && exit 1
   else
-    docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
+    docker compose exec $DB_SERVICE $DB_CLI -u $user_name -p"${password}" --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database \"${DATABASE_NAME}\" has been created"
   fi
 }
 
-function dropMysqlDatabase() {
+function dropDatabase() {
   if askYesOrNo $"Warning! Do you really want to drop database '${DATABASE_NAME}' ?"; then
-    docker compose exec mysql mysql -u root -p"${password}" --skip-column-names -e "drop database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
+    docker compose exec $DB_SERVICE $DB_CLI -u $user_name -p"${password}" --skip-column-names -e "drop database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database \"${DATABASE_NAME}\" has been dropped successfully."
   else
     _warning "Canceled"
@@ -225,11 +231,11 @@ function dropMysqlDatabase() {
   fi
 }
 
-function importMysqlDatabase() {
+function importDatabase() {
   checkDatabaseFileName
   if checkDatabaseExist "${DATABASE_NAME}"; then
     _arrow "Importing database"
-    docker compose exec -T mysql mysql -u root -p"${password}" "${DATABASE_NAME}" <"${DATABASE_IMPORT_SOURCE_NAME}" 2>&1 | grep -v "Using a password" || true
+    docker compose exec -T $DB_SERVICE $DB_CLI -u $user_name -p"${password}" "${DATABASE_NAME}" <"${DATABASE_IMPORT_SOURCE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database name \"${DATABASE_NAME}\" imported"
   else
     _error "Unknown database \"${DATABASE_NAME}\". Please check it!!"
@@ -237,14 +243,14 @@ function importMysqlDatabase() {
   fi
 }
 
-function exportMysqlDatabase() {
+function exportDatabase() {
   checkDatabaseName
   if checkDatabaseExist "${DATABASE_NAME}"; then
     if [[ -z "$DATABASE_EXPORT_TARGET_NAME" ]]; then
       DATABASE_EXPORT_TARGET_NAME=$(pwd)/${DATABASE_NAME}-${BACKDATE}.sql
     fi
     _arrow "Creating SQL file: $DATABASE_EXPORT_TARGET_NAME"
-    docker compose exec -T mysql /usr/bin/mysqldump -u root --password="${password}" "${DATABASE_NAME}" 2>&1 | grep -v "Using a password" >"$DATABASE_EXPORT_TARGET_NAME"
+    docker compose exec -T $DB_SERVICE $DB_DUMP_CLI -u $user_name --password="${password}" "${DATABASE_NAME}" 2>&1 | grep -v "Using a password" >"$DATABASE_EXPORT_TARGET_NAME"
     _success "Your database exported"
   else
     _error "Unknown database \"${DATABASE_NAME}\". Please check it!!"
@@ -255,22 +261,22 @@ function exportMysqlDatabase() {
 function doAction() {
   case $COMMAND in
   create)
-    createMysqlDatabase
+    createDatabase
     ;;
   import)
-    importMysqlDatabase
+    importDatabase
     ;;
   export)
-    exportMysqlDatabase
+    exportDatabase
     ;;
   drop)
-    dropMysqlDatabase
+    dropDatabase
     ;;
   list)
-    listMysqlDatabase
+    listDatabases
     ;;
   exec)
-    execMysqlDatabase "$@"
+    execDatabase "$@"
     ;;
   esac
 }
@@ -289,9 +295,9 @@ function main() {
   [[ $# -lt 1 ]] && _printUsage
   processArgs "$@"
 
-  checkMysqlServiceRunning
+  checkDBServiceRunning
 
-  getMysqlInformation
+  getDBInformation
 
   doAction "$@"
   exit 0
