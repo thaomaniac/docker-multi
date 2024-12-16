@@ -1,9 +1,20 @@
 services:
-  mysql:
-    entrypoint: [ "echo", "Service mysql disabled" ] # Skip start container
+  php73:
+    entrypoint: [ "echo", "Service php73 disabled in Override" ] # Skip start container
 
   redis:
     entrypoint: /bin/true # Skip start container
 
   rabbitmq:
     entrypoint: /bin/true
+
+  elasticsearch:
+    command: >
+      bash -c "
+      if ! elasticsearch-plugin list | grep -q analysis-phonetic; then
+          elasticsearch-plugin install analysis-phonetic;
+      fi;
+      if ! elasticsearch-plugin list | grep -q analysis-icu; then
+          elasticsearch-plugin install analysis-icu;
+      fi;
+      /bin/bash /usr/local/bin/docker-entrypoint.sh"
