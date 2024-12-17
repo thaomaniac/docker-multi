@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#-------------------------------------------------------------------------------
+# Copyright (c) 2024 thaomaniac  <thaomaniac@gmail.com>
+#-------------------------------------------------------------------------------
+
 set -e
 
 ## Uncomment it for debugging purpose

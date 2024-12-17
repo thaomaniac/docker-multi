@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+#-------------------------------------------------------------------------------
+# Copyright (c) 2024 thaomaniac  <thaomaniac@gmail.com>
+#-------------------------------------------------------------------------------
+
 set -e
 
 ## Uncomment it for debugging purpose
@@ -114,8 +118,36 @@ Version $VERSION
   exit 1
 }
 
+function initServiceHost() {
+  case $1 in
+    -s | --service)
+      DB_SERVICE="$2"
+      shift 2
+      ;;
+    *)
+      DB_SERVICE="mysql"
+      ;;
+  esac
+  case $DB_SERVICE in
+    mysql)
+      DB_CLI="mysql"
+      DB_DUMP_CLI="mysqldump"
+      ;;
+    mariadb)
+      DB_CLI="mariadb"
+      DB_DUMP_CLI="mariadb-dump"
+      ;;
+    *)
+      DB_CLI="mysql"
+      DB_DUMP_CLI="mysqldump"
+      ;;
+  esac
+  shifted_args=("$@")
+}
+
 function processArgs() {
-  initDefaultArgs
+  initServiceHost "$@"
+  set -- "${shifted_args[@]}"
 
   case $1 in
   create | drop)
@@ -143,13 +175,6 @@ function processArgs() {
     _printUsage
     ;;
   esac
-}
-
-function initDefaultArgs() {
-  BACKDATE="$(date +"%Y-%m-%d")"
-  DB_SERVICE="mysql"
-  DB_CLI="mysql"
-  DB_DUMP_CLI="mysqldump"
 }
 
 function getDBInformation() {
@@ -235,7 +260,7 @@ function importDatabase() {
   checkDatabaseFileName
   if checkDatabaseExist "${DATABASE_NAME}"; then
     _arrow "Importing database"
-    docker compose exec -T $DB_SERVICE $DB_CLI -u $user_name -p"${password}" "${DATABASE_NAME}" <"${DATABASE_IMPORT_SOURCE_NAME}" 2>&1 | grep -v "Using a password" || true
+    docker compose exec -T $DB_SERVICE $DB_CLI -u $user_name -p"${password}" "${DATABASE_NAME}" < "${DATABASE_IMPORT_SOURCE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database name \"${DATABASE_NAME}\" imported"
   else
     _error "Unknown database \"${DATABASE_NAME}\". Please check it!!"
@@ -247,10 +272,11 @@ function exportDatabase() {
   checkDatabaseName
   if checkDatabaseExist "${DATABASE_NAME}"; then
     if [[ -z "$DATABASE_EXPORT_TARGET_NAME" ]]; then
+      BACKDATE="$(date +"%Y-%m-%d")"
       DATABASE_EXPORT_TARGET_NAME=$(pwd)/${DATABASE_NAME}-${BACKDATE}.sql
     fi
     _arrow "Creating SQL file: $DATABASE_EXPORT_TARGET_NAME"
-    docker compose exec -T $DB_SERVICE $DB_DUMP_CLI -u $user_name --password="${password}" "${DATABASE_NAME}" 2>&1 | grep -v "Using a password" >"$DATABASE_EXPORT_TARGET_NAME"
+    docker compose exec -T $DB_SERVICE $DB_DUMP_CLI -u $user_name --password="${password}" "${DATABASE_NAME}" 2>&1 | grep -v "Using a password" > "$DATABASE_EXPORT_TARGET_NAME"
     _success "Your database exported"
   else
     _error "Unknown database \"${DATABASE_NAME}\". Please check it!!"
