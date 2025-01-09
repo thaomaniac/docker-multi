@@ -12,7 +12,7 @@ Edit the .env file information if necessary
 
 ### compose.override.yml file
 
-Create compose.override.yml file if necessary to override the main compose.yaml file
+Create compose.override.yml file if necessary to override the main compose.yml file
 
 ```sh
 cp sample/docker-compose.override.yml docker-compose.override.yml 
