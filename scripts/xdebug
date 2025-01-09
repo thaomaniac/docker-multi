@@ -126,7 +126,7 @@ function restartPhpService() {
 }
 
 function statusXdebug() {
-  if [[ $(docker compose exec ${APP_PHP} php -i | grep xdebug) ]]; then
+  if [[ $(docker compose exec "${APP_PHP}" php -i | grep xdebug) ]]; then
     _arrow "Service \"${APP_PHP}\" - Xdebug status: Enabled"
     XDEBUG_STATUS=1
   else

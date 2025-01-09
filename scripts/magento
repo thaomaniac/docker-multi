@@ -104,7 +104,7 @@ mappingPhpService() {
         PHP_SERVICE=$phpService
         break
       fi
-    done <"$file"
+    done < "$file"
   fi
   if [[ -z "$PHP_SERVICE" ]]; then
     PHP_SERVICE='php'
@@ -134,7 +134,8 @@ function processArgs() {
 }
 
 function doAction() {
-  docker compose exec -T "$PHP_SERVICE" bash -c "cd $MAGENTO_ROOT_DIR && bin/magento $MAGENTO_COMMAND"
+  docker compose exec -T "$PHP_SERVICE" bash -c "cd $MAGENTO_ROOT_DIR && bin/magento $MAGENTO_COMMAND --ansi"
+  # docker compose exec "$PHP_SERVICE" bash -c "cd $MAGENTO_ROOT_DIR && bin/magento $MAGENTO_COMMAND"
 }
 
 # Main

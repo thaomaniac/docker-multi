@@ -220,7 +220,7 @@ function checkDatabaseName() {
 
 function checkDatabaseExist() {
   local db_name=$1
-  if [[ $(docker compose exec $DB_SERVICE $DB_CLI -u root -p"${password}" --skip-column-names -e "show databases like '${db_name}'" 2>&1 | grep -v "Using a password" | grep -o "${db_name}") == "${db_name}" ]]; then
+  if [[ $(docker compose exec "$DB_SERVICE" $DB_CLI -u root -p"${password}" --skip-column-names -e "show databases like '${db_name}'" 2>&1 | grep -v "Using a password" | grep -o "${db_name}") == "${db_name}" ]]; then
     return 0
   else
     return 1
@@ -229,11 +229,11 @@ function checkDatabaseExist() {
 
 function execDatabase() {
   shift
-  docker compose exec $DB_SERVICE $DB_CLI -u root -p"${password}" "$@"
+  docker compose exec "$DB_SERVICE" $DB_CLI -u root -p"${password}" "$@"
 }
 
 function listDatabases() {
-  docker compose exec $DB_SERVICE $DB_CLI -u root --password="${password}" -e "show databases" --table 2>&1 | grep -v "Using a password"
+  docker compose exec "$DB_SERVICE" $DB_CLI -u root --password="${password}" -e "show databases" --table 2>&1 | grep -v "Using a password"
 }
 
 function createDatabase() {
@@ -241,14 +241,14 @@ function createDatabase() {
   if checkDatabaseExist "${DATABASE_NAME}"; then
     _error "Can't create database \"${DATABASE_NAME}\"; database exists!" && exit 1
   else
-    docker compose exec $DB_SERVICE $DB_CLI -u $user_name -p"${password}" --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
+    docker compose exec "$DB_SERVICE" $DB_CLI -u $user_name -p"${password}" --skip-column-names -e "create database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database \"${DATABASE_NAME}\" has been created"
   fi
 }
 
 function dropDatabase() {
   if askYesOrNo $"Warning! Do you really want to drop database '${DATABASE_NAME}' ?"; then
-    docker compose exec $DB_SERVICE $DB_CLI -u $user_name -p"${password}" --skip-column-names -e "drop database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
+    docker compose exec "$DB_SERVICE" $DB_CLI -u $user_name -p"${password}" --skip-column-names -e "drop database ${DATABASE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database \"${DATABASE_NAME}\" has been dropped successfully."
   else
     _warning "Canceled"
@@ -260,7 +260,7 @@ function importDatabase() {
   checkDatabaseFileName
   if checkDatabaseExist "${DATABASE_NAME}"; then
     _arrow "Importing database"
-    docker compose exec -T $DB_SERVICE $DB_CLI -u $user_name -p"${password}" "${DATABASE_NAME}" < "${DATABASE_IMPORT_SOURCE_NAME}" 2>&1 | grep -v "Using a password" || true
+    docker compose exec -T "$DB_SERVICE" $DB_CLI -u $user_name -p"${password}" "${DATABASE_NAME}" < "${DATABASE_IMPORT_SOURCE_NAME}" 2>&1 | grep -v "Using a password" || true
     _success "Database name \"${DATABASE_NAME}\" imported"
   else
     _error "Unknown database \"${DATABASE_NAME}\". Please check it!!"
@@ -276,7 +276,7 @@ function exportDatabase() {
       DATABASE_EXPORT_TARGET_NAME=$(pwd)/${DATABASE_NAME}-${BACKDATE}.sql
     fi
     _arrow "Creating SQL file: $DATABASE_EXPORT_TARGET_NAME"
-    docker compose exec -T $DB_SERVICE $DB_DUMP_CLI -u $user_name --password="${password}" "${DATABASE_NAME}" 2>&1 | grep -v "Using a password" > "$DATABASE_EXPORT_TARGET_NAME"
+    docker compose exec -T "$DB_SERVICE" $DB_DUMP_CLI -u $user_name --password="${password}" "${DATABASE_NAME}" 2>&1 | grep -v "Using a password" > "$DATABASE_EXPORT_TARGET_NAME"
     _success "Your database exported"
   else
     _error "Unknown database \"${DATABASE_NAME}\". Please check it!!"
