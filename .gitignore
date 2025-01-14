@@ -11,3 +11,4 @@
 /var/
 /www/*
 !/www/.gitkeep
+**/local/
